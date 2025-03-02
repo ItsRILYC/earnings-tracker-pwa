@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Track your real-time earnings with Dutch tax calculations">
+    <meta name="theme-color" content="#0055ff">
+    <title>Real-Time Earnings</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="images_icon-192x192.png">
+    <!-- Prevent auto-zoom on iOS forms -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+    <div id="app">
+        <!-- Authentication Screen -->
+        <div id="auth-screen" class="screen">
+            <div class="glass-panel">
+                <h1>Real-Time Earnings</h1>
+                <div class="auth-form">
+                    <input type="password" id="pin-input" placeholder="Enter PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+                    <button id="login-button" class="primary-button">Login</button>
+                    <button id="create-pin-button" class="secondary-button">Create PIN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Earnings Screen -->
+        <div id="earnings-screen" class="screen hidden">
+            <div class="glass-panel">
+                <div class="earnings-container">
+                    <div class="visualization-container">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                        <div class="counter-container">
+                            <h2>Earned Today</h2>
+                            <div id="earnings-counter" class="counter">€0.00</div>
+                            <div id="hourly-rate" class="rate">€0.00/hour net</div>
+                        </div>
+                    </div>
+                    <div class="earnings-details">
+                        <div class="detail-item">
+                            <span class="label">Started:</span>
+                            <span id="start-date" class="value">N/A</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Current Rate:</span>
+                            <span id="current-rate" class="value">€0.00/hour gross</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="settings-button" class="action-button">Settings</button>
+                    <button id="history-button" class="action-button">History</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen hidden">
+            <div class="glass-panel">
+                <h2>Settings</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="gross-wage">Gross Hourly Wage (€)</label>
+                        <input type="number" id="gross-wage" step="0.01" min="0" inputmode="decimal">
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" min="15" max="100" inputmode="numeric">
+                    </div>
+                    <div class="settings-info">
+                        <p>Your net hourly wage: <span id="net-wage-display">€0.00</span></p>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="save-settings" class="primary-button">Save Settings</button>
+                        <button id="back-from-settings" class="secondary-button">Back</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Screen -->
+        <div id="history-screen" class="screen hidden">
+            <div class="glass-panel">
+                <h2>Earnings History</h2>
+                <div id="history-list" class="history-container">
+                    <!-- History entries will be populated by JavaScript -->
+                </div>
+                <div class="action-buttons">
+                    <button id="back-from-history" class="secondary-button">Back</button>
+                    <button id="reset-history" class="action-button">Reset History</button>
+                    <button id="change-pin" class="action-button">Change PIN</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PIN Change Screen -->
+        <div id="pin-change-screen" class="screen hidden">
+            <div class="glass-panel">
+                <h2>Change PIN</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="current-pin">Current PIN</label>
+                        <input type="password" id="current-pin" maxlength="4" placeholder="Enter current PIN" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-pin">New PIN</label>
+                        <input type="password" id="new-pin" maxlength="4" placeholder="Enter new 4-digit PIN" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-pin">Confirm New PIN</label>
+                        <input type="password" id="confirm-pin" maxlength="4" placeholder="Confirm new PIN" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                    <div class="action-buttons">
+                        <button id="save-pin" class="primary-button">Save New PIN</button>
+                        <button id="back-from-pin-change" class="secondary-button">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Dialog -->
+        <div id="confirmation-dialog" class="dialog hidden">
+            <div class="glass-panel dialog-panel">
+                <h2 id="dialog-title">Confirmation</h2>
+                <p id="dialog-message">Are you sure you want to proceed?</p>
+                <div class="action-buttons">
+                    <button id="dialog-confirm" class="primary-button">Confirm</button>
+                    <button id="dialog-cancel" class="secondary-button">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript imports -->
+    <script src="js/app.js"></script>
+    <script>
+        // Check if service worker is supported
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => console.log('ServiceWorker registered: ', registration.scope))
+                    .catch(err => console.log('ServiceWorker registration failed: ', err));
+            });
+        }
+    </script>
+</body>
+</html>

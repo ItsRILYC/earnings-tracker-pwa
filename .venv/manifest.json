@@ -1,0 +1,62 @@
+{
+    "name": "Real-Time Earnings Tracker",
+    "short_name": "Earnings",
+    "description": "Track your earnings in real-time with Dutch tax calculations",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#0055ff",
+    "theme_color": "#0055ff",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/images_icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/images_icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/images/screenshot1.png",
+            "sizes": "750x1334",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["finance", "productivity", "utilities"],
+    "lang": "en-NL",
+    "prefer_related_applications": false,
+    "dir": "ltr",
+    "scope": "/",
+    "display_override": ["window-controls-overlay", "standalone"],
+    "handle_links": "preferred",
+    "launch_handler": {
+        "client_mode": ["navigate-existing", "auto"]
+    },
+    "shortcuts": [
+        {
+            "name": "Settings",
+            "short_name": "Settings",
+            "description": "Open earnings settings",
+            "url": "/index.html#settings",
+            "icons": [{ "src": "/images_icon-192x192.png", "sizes": "192x192" }]
+        }
+    ],
+    "share_target": {
+        "action": "/index.html",
+        "method": "GET",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    },
+    "apple_mobile_web_app_capable": "yes",
+    "apple_mobile_web_app_status_bar_style": "black-translucent",
+    "apple_mobile_web_app_title": "Earnings"
+}
