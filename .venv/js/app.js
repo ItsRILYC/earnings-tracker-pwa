@@ -10,6 +10,8 @@ const appState = {
         grossWage: 0,
         age: 30,
         netWage: 0,
+        hoursPerWeek: 40,
+        secondRate: 0,
         startDate: null
     },
     earnings: {
@@ -17,7 +19,8 @@ const appState = {
         total: 0
     },
     history: [],
-    animation: null
+    animation: null,
+    lastUpdateTime: null
 };
 
 // DOM Elements
@@ -37,15 +40,19 @@ const elements = {
     earnings: {
         counter: document.getElementById('earnings-counter'),
         hourlyRate: document.getElementById('hourly-rate'),
+        secondRate: document.getElementById('second-rate'),
         startDate: document.getElementById('start-date'),
         currentRate: document.getElementById('current-rate'),
+        hoursPerWeek: document.getElementById('hours-per-week'),
         settingsButton: document.getElementById('settings-button'),
         historyButton: document.getElementById('history-button')
     },
     settings: {
         grossWageInput: document.getElementById('gross-wage'),
+        hoursPerWeekInput: document.getElementById('hours-per-week-input'),
         ageInput: document.getElementById('age'),
         netWageDisplay: document.getElementById('net-wage-display'),
+        secondWageDisplay: document.getElementById('second-wage-display'),
         saveButton: document.getElementById('save-settings'),
         backButton: document.getElementById('back-from-settings')
     },
@@ -111,6 +118,24 @@ function calculateNetWage(grossHourlyWage, age) {
     return netHourlyWage;
 }
 
+/**
+ * Calculate earnings per second based on hourly wage and hours per week
+ * 
+ * @param {number} netHourlyWage - The net hourly wage in euros
+ * @param {number} hoursPerWeek - The number of hours worked per week
+ * @return {number} The earnings per second in euros
+ */
+function calculateEarningsPerSecond(netHourlyWage, hoursPerWeek) {
+    // Calculate weekly earnings
+    const weeklyEarnings = netHourlyWage * hoursPerWeek;
+    
+    // Calculate seconds in a week
+    const secondsInWeek = 7 * 24 * 60 * 60; // days * hours * minutes * seconds
+    
+    // Calculate earnings per second
+    return weeklyEarnings / secondsInWeek;
+}
+
 // Navigation functions
 function showScreen(screenId) {
     Object.values(elements.screens).forEach(screen => {
@@ -147,6 +172,7 @@ function attachEventListeners() {
     
     // Settings screen
     elements.settings.grossWageInput.addEventListener('input', updateNetWageDisplay);
+    elements.settings.hoursPerWeekInput.addEventListener('input', updateNetWageDisplay);
     elements.settings.ageInput.addEventListener('input', updateNetWageDisplay);
     elements.settings.saveButton.addEventListener('click', saveSettings);
     elements.settings.backButton.addEventListener('click', () => showScreen('earnings'));
@@ -238,22 +264,34 @@ function handleCreatePin() {
 // Settings functions
 function updateNetWageDisplay() {
     const grossWage = parseFloat(elements.settings.grossWageInput.value) || 0;
+    const hoursPerWeek = parseInt(elements.settings.hoursPerWeekInput.value) || 40;
     const age = parseInt(elements.settings.ageInput.value) || 30;
     
     if (grossWage > 0) {
         const netWage = calculateNetWage(grossWage, age);
         elements.settings.netWageDisplay.textContent = `€${netWage.toFixed(2)}`;
+        
+        // Calculate and display earnings per second
+        const secondRate = calculateEarningsPerSecond(netWage, hoursPerWeek);
+        elements.settings.secondWageDisplay.textContent = `€${secondRate.toFixed(8)}`;
     } else {
         elements.settings.netWageDisplay.textContent = '€0.00';
+        elements.settings.secondWageDisplay.textContent = '€0.00';
     }
 }
 
 function saveSettings() {
     const grossWage = parseFloat(elements.settings.grossWageInput.value);
+    const hoursPerWeek = parseInt(elements.settings.hoursPerWeekInput.value);
     const age = parseInt(elements.settings.ageInput.value);
     
     if (!grossWage || grossWage <= 0) {
         showNotification('Please enter a valid gross wage.');
+        return;
+    }
+    
+    if (!hoursPerWeek || hoursPerWeek <= 0 || hoursPerWeek > 168) {
+        showNotification('Please enter valid hours per week (1-168).');
         return;
     }
     
@@ -265,6 +303,9 @@ function saveSettings() {
     // Calculate net wage using our tax calculator
     const netWage = calculateNetWage(grossWage, age);
     
+    // Calculate earnings per second
+    const secondRate = calculateEarningsPerSecond(netWage, hoursPerWeek);
+    
     // If settings are changed, add previous settings to history
     if (appState.settings.grossWage > 0) {
         const historyEntry = {
@@ -272,6 +313,7 @@ function saveSettings() {
             endDate: new Date(),
             grossWage: appState.settings.grossWage,
             netWage: appState.settings.netWage,
+            hoursPerWeek: appState.settings.hoursPerWeek,
             age: appState.settings.age
         };
         
@@ -280,12 +322,15 @@ function saveSettings() {
     
     // Update settings
     appState.settings.grossWage = grossWage;
+    appState.settings.hoursPerWeek = hoursPerWeek;
     appState.settings.age = age;
     appState.settings.netWage = netWage;
+    appState.settings.secondRate = secondRate;
     appState.settings.startDate = new Date();
     
     // Reset earnings counter
     appState.earnings.current = 0;
+    appState.lastUpdateTime = Date.now();
     
     // Update UI
     updateEarningsDisplay();
@@ -304,46 +349,34 @@ function startEarningsCalculation() {
         cancelAnimationFrame(appState.animation);
     }
     
-    // Calculate accumulated earnings since start date
-    if (appState.settings.startDate && appState.settings.netWage > 0) {
-        const now = new Date();
-        const startDate = new Date(appState.settings.startDate);
-        
-        // Calculate seconds elapsed since start date
-        const secondsElapsed = (now - startDate) / 1000;
-        
-        // Calculate earnings based on elapsed time
-        const earningsPerSecond = appState.settings.netWage / 3600;
-        appState.earnings.current = earningsPerSecond * secondsElapsed;
-    }
+    // Set initial time for calculations
+    appState.lastUpdateTime = Date.now();
     
     // Update display immediately
     updateEarningsDisplay();
     
-    // Set up continuous calculation
-    let lastTimestamp = Date.now();
-    
-    function updateFrame() {
+    // Set up continuous calculation with a 1-second interval for better performance
+    function updateEarnings() {
         const now = Date.now();
-        const elapsed = (now - lastTimestamp) / 1000; // seconds since last frame
-        lastTimestamp = now;
+        const elapsedSeconds = (now - appState.lastUpdateTime) / 1000;
+        appState.lastUpdateTime = now;
         
-        if (appState.settings.netWage > 0) {
-            // Calculate earnings per second (hourly wage to per-second)
-            const earningsPerSecond = appState.settings.netWage / 3600;
-            
-            // Update current earnings amount
-            appState.earnings.current += earningsPerSecond * elapsed;
+        if (appState.settings.secondRate > 0) {
+            // Update current earnings amount based on earnings per second
+            appState.earnings.current += appState.settings.secondRate * elapsedSeconds;
             
             // Update earnings display
             elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
         }
         
-        appState.animation = requestAnimationFrame(updateFrame);
+        // Schedule next update in approximately 1 second
+        setTimeout(() => {
+            appState.animation = requestAnimationFrame(updateEarnings);
+        }, 1000);
     }
     
-    // Start the animation loop
-    appState.animation = requestAnimationFrame(updateFrame);
+    // Start the update loop
+    appState.animation = requestAnimationFrame(updateEarnings);
 }
 
 function updateEarningsDisplay() {
@@ -353,8 +386,14 @@ function updateEarningsDisplay() {
     // Update hourly rate
     elements.earnings.hourlyRate.textContent = `€${appState.settings.netWage.toFixed(2)}/hour net`;
     
+    // Update second rate
+    elements.earnings.secondRate.textContent = `€${appState.settings.secondRate.toFixed(8)}/second`;
+    
     // Update current rate
     elements.earnings.currentRate.textContent = `€${appState.settings.grossWage.toFixed(2)}/hour gross`;
+    
+    // Update hours per week
+    elements.earnings.hoursPerWeek.textContent = `${appState.settings.hoursPerWeek}`;
     
     // Update start date with timestamp
     if (appState.settings.startDate) {
@@ -372,6 +411,7 @@ function updateEarningsDisplay() {
     
     // Update form fields
     elements.settings.grossWageInput.value = appState.settings.grossWage || '';
+    elements.settings.hoursPerWeekInput.value = appState.settings.hoursPerWeek || 40;
     elements.settings.ageInput.value = appState.settings.age || '';
 }
 
@@ -414,6 +454,10 @@ function populateHistoryList() {
                 <div class="detail-item">
                     <span class="label">Net Rate:</span>
                     <span class="value">€${entry.netWage.toFixed(2)}/hour</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Hours/Week:</span>
+                    <span class="value">${entry.hoursPerWeek || 40}</span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Age:</span>
@@ -587,6 +631,7 @@ document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
         // Resume calculation when tab becomes visible again
         if (appState.authenticated) {
+            appState.lastUpdateTime = Date.now(); // Reset the time to avoid large jumps
             startEarningsCalculation();
         }
     } else {

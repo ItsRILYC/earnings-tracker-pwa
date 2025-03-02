@@ -168,6 +168,7 @@ body {
 .rate {
     font-size: 16px;
     opacity: 0.8;
+    margin-bottom: 5px;
 }
 
 .earnings-details {
@@ -215,6 +216,17 @@ body {
     gap: 5px;
 }
 
+.form-group-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+}
+
+.form-group-row .form-group {
+    flex: 1;
+}
+
 .form-group label {
     font-size: 14px;
     opacity: 0.8;
@@ -227,6 +239,21 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     font-size: 16px;
+}
+
+.settings-info {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.settings-info p {
+    margin-bottom: 8px;
+}
+
+.settings-info p:last-child {
+    margin-bottom: 0;
 }
 
 .calculator-section {

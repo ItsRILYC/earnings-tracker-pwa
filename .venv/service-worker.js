@@ -5,13 +5,13 @@
 
 const CACHE_NAME = 'earnings-app-v2';
 const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/css/styles.css',
-    '/js/app.js',
-    '/manifest.json',
-    '/images_icon-192x192.png',
-    '/images_icon-512x512.png'
+    './',
+    './index.html',
+    './css/styles.css',
+    './js/app.js',
+    './manifest.json',
+    './images_icon-192x192.png',
+    './images_icon-512x512.png'
 ];
 
 // Install event: Cache assets for offline use
@@ -83,7 +83,7 @@ self.addEventListener('fetch', event => {
                 }).catch(() => {
                     // If both cache and network fail, serve offline fallback
                     if (event.request.mode === 'navigate') {
-                        return caches.match('/index.html');
+                        return caches.match('./index.html');
                     }
                     
                     // Return nothing for non-navigation requests
@@ -133,10 +133,10 @@ self.addEventListener('push', event => {
     
     const options = {
         body: data.body || 'Your earnings have been updated',
-        icon: '/images_icon-192x192.png',
-        badge: '/images_icon-192x192.png',
+        icon: './images_icon-192x192.png',
+        badge: './images_icon-192x192.png',
         data: {
-            url: data.url || '/'
+            url: data.url || './'
         },
         vibrate: [100, 50, 100],
         timestamp: Date.now()
