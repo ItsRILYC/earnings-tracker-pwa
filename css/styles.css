@@ -23,14 +23,22 @@ body {
 .glass-panel {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 20px;
-    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 30px;
     width: 90%;
     max-width: 380px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+/* Force hardware acceleration for Safari */
+.glass-panel, .spinner, .counter-container {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 /* Screen Layout */
@@ -75,6 +83,8 @@ body {
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .primary-button {
@@ -146,6 +156,7 @@ body {
     border-radius: 50%;
     border-top: 6px solid white;
     animation: spin 1s linear infinite;
+    -webkit-animation: spin 1s linear infinite;
 }
 
 .counter-container {
@@ -153,6 +164,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
     text-align: center;
     width: 100%;
     z-index: 10;
@@ -239,6 +251,8 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .settings-info {
@@ -316,6 +330,8 @@ input {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 input:focus {
@@ -396,12 +412,22 @@ input:focus {
         width: 100%;
         height: 100%;
     }
+    
+    /* Alternative to backdrop-filter for older iOS */
+    .glass-panel {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
 }
 
 /* Loading animations */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
 }
 
 /* Responsive adjustments */
