@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Earnings">
     <meta name="description" content="Track your real-time earnings with Dutch tax calculations">
     <meta name="theme-color" content="#0055ff">
     <title>Real-Time Earnings</title>
@@ -18,7 +19,7 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            height: calc(var(--vh, 1vh) * 100);
+            height: -webkit-fill-available;
             width: 100vw;
             overflow: hidden;
         }
@@ -31,16 +32,18 @@
     
     <!-- iOS specific icons -->
     <link rel="apple-touch-icon" href="./images_icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="./images_icon-192x192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./images_icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="./images_icon-192x192.png">
     
-    <!-- iOS splash screens -->
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    <!-- iOS splash screens - generated for different device sizes -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="./images_icon-512x512.png">
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="./images_icon-512x512.png">
 </head>
 <body>
     <div id="app">

@@ -6,34 +6,36 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-html {
+/* Full height calculations for iOS */
+:root {
+    --vh: 1vh;
+}
+
+html, body {
     width: 100%;
-    height: 100%;
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
+    min-height: -webkit-fill-available;
     overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 body {
-    width: 100%;
-    height: 100%;
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
-    overflow: hidden;
     background: #0055ff; /* Fallback solid color */
     background: linear-gradient(135deg, #0055ff 0%, #ff8c00 100%);
     background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     /* Safe area insets for iOS notches/home indicators */
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -57,6 +59,9 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 1;
+    /* Improved rendering for iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 /* Screen Layout */
@@ -71,6 +76,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Fixes scrolling issues */
+    overflow: hidden;
 }
 
 .hidden {
@@ -118,6 +125,9 @@ h2 {
     cursor: pointer;
     -webkit-appearance: none;
     appearance: none;
+    /* Improved rendering for iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .primary-button {
@@ -413,24 +423,26 @@ input:focus {
     }
 }
 
-/* iOS PWA specific fixes */
+/* Extra WebKit specific fixes to ensure proper rendering on iOS */
 @supports (-webkit-touch-callout: none) {
-    /* Full viewport height for iOS PWA */
     body {
+        /* Force background to extend */
+        background-attachment: fixed;
+        /* Add extra height to cover any scrolling area */
+        height: 100vh;
         min-height: -webkit-fill-available;
+        height: calc(var(--vh, 1vh) * 100);
     }
     
-    html {
-        height: -webkit-fill-available;
-    }
-    
-    /* Fix iOS input fields */
-    input, select, textarea {
-        font-size: 16px;
-    }
-    
-    /* Prevent scrolling on iOS */
     .screen {
-        position: fixed;
+        /* Fix background height */
+        min-height: -webkit-fill-available;
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+    }
+    
+    input, button {
+        /* Prevent zooming on focus */
+        font-size: 16px;
     }
 }

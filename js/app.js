@@ -21,8 +21,7 @@ const appState = {
         total: 0
     },
     history: [],
-    updateTimer: null,
-    updateInterval: 1000 // Update interval in milliseconds
+    timer: null
 };
 
 // Check if running on iOS
@@ -411,12 +410,41 @@ function saveSettings() {
     showNotification('Settings saved successfully!');
 }
 
-// Earnings calculation and display using simple interval timer
+// COMPLETELY REWRITTEN TIMER FUNCTION FOR CROSS-PLATFORM COMPATIBILITY
 function startEarningsCalculation() {
-    // Stop any existing timer
+    // Stop any existing timer first
     stopEarningsCalculation();
     
-    // Calculate accumulated earnings since start date
+    // Calculate initial earnings
+    updateEarningsAmount();
+    
+    // Update display immediately
+    updateEarningsDisplay();
+    
+    // For iOS devices: Use window.setTimeout as it's the most reliable
+    // Start a timer that updates every second
+    function timerCallback() {
+        updateEarningsAmount();
+        updateEarningsCounter(); // Update just the counter display
+        
+        // Store reference to the next timer
+        appState.timer = window.setTimeout(timerCallback, 1000);
+    }
+    
+    // Start the first timer - ensures we have a clean start
+    appState.timer = window.setTimeout(timerCallback, 1000);
+}
+
+// Clean function to stop the timer
+function stopEarningsCalculation() {
+    if (appState.timer) {
+        window.clearTimeout(appState.timer);
+        appState.timer = null;
+    }
+}
+
+// Simple function to update earnings amount
+function updateEarningsAmount() {
     if (appState.settings.startDate && appState.settings.secondRate > 0) {
         appState.earnings.current = calculateAccumulatedEarnings(
             appState.settings.startDate,
@@ -425,43 +453,16 @@ function startEarningsCalculation() {
             appState.settings.lastSavedTimestamp
         );
     }
-    
-    // Update display immediately
-    updateEarningsDisplay();
-    
-    // Create a simple update function
-    function updateEarningsTick() {
-        if (appState.settings.secondRate > 0) {
-            // Update current earnings amount based on real-time calculation
-            appState.earnings.current = calculateAccumulatedEarnings(
-                appState.settings.startDate,
-                appState.settings.secondRate,
-                appState.settings.lastSavedEarnings,
-                appState.settings.lastSavedTimestamp
-            );
-            
-            // Update earnings display directly
-            if (elements.earnings.counter) {
-                elements.earnings.counter.textContent = formatCurrency(appState.earnings.current);
-            }
-        }
-    }
-    
-    // Use simple setInterval for all platforms
-    appState.updateTimer = setInterval(updateEarningsTick, appState.updateInterval);
-    
-    // Run once immediately to ensure display is updated
-    updateEarningsTick();
 }
 
-// Stop the earnings calculation timer
-function stopEarningsCalculation() {
-    if (appState.updateTimer) {
-        clearInterval(appState.updateTimer);
-        appState.updateTimer = null;
+// Very simple function to just update the counter display
+function updateEarningsCounter() {
+    if (elements.earnings.counter) {
+        elements.earnings.counter.textContent = formatCurrency(appState.earnings.current);
     }
 }
 
+// Full function to update all the earnings display
 function updateEarningsDisplay() {
     // Update counter
     elements.earnings.counter.textContent = formatCurrency(appState.earnings.current);
@@ -741,6 +742,19 @@ window.addEventListener('beforeunload', function() {
     stopEarningsCalculation();
     saveDataToStorage();
 });
+
+// Special handling for iOS to ensure viewport is correct
+if (isIOS) {
+    function fixIOSViewport() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    
+    window.addEventListener('resize', fixIOSViewport);
+    window.addEventListener('orientationchange', fixIOSViewport);
+    document.addEventListener('focus', fixIOSViewport, true);
+    fixIOSViewport();
+}
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', initApp);
