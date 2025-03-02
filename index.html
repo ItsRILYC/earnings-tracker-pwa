@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-touch-fullscreen" content="yes">
@@ -17,6 +17,10 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            width: 100vw;
+            overflow: hidden;
         }
         .hidden {
             display: none !important;
@@ -24,9 +28,19 @@
     </style>
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="manifest" href="./manifest.json">
+    
+    <!-- iOS specific icons -->
     <link rel="apple-touch-icon" href="./images_icon-192x192.png">
-    <!-- iOS app-like icons -->
-    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./images_icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./images_icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="./images_icon-192x192.png">
+    
+    <!-- iOS splash screens -->
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
 </head>
 <body>
     <div id="app">
@@ -86,7 +100,7 @@
                     <div class="form-group-row">
                         <div class="form-group">
                             <label for="gross-wage">Gross Hourly Wage (€)</label>
-                            <input type="number" id="gross-wage" step="0.01" min="0" inputmode="decimal">
+                            <input type="text" id="gross-wage" inputmode="decimal">
                         </div>
                         <div class="form-group">
                             <label for="hours-per-week">Hours/Week</label>
@@ -175,22 +189,16 @@
             });
         }
         
-        // Force standalone mode for iOS when launched from home screen
-        if (("standalone" in window.navigator) && window.navigator.standalone) {
-            document.documentElement.classList.add('ios-standalone');
-            
-            // Prevent default anchor click behavior
-            document.addEventListener('click', function(e) {
-                var target = e.target;
-                while (target && target.nodeName !== 'A') {
-                    target = target.parentElement;
-                }
-                if (target && target.getAttribute('href')) {
-                    e.preventDefault();
-                    window.location = target.href;
-                }
-            }, false);
+        // Set viewport height for iOS
+        function setViewportHeight() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
         }
+        
+        // Set initial viewport height and update on resize
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', setViewportHeight);
     </script>
 </body>
 </html>

@@ -9,14 +9,20 @@
 html {
     width: 100%;
     height: 100%;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
 }
 
 body {
     width: 100%;
     height: 100%;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     overflow: hidden;
     background: #0055ff; /* Fallback solid color */
     background: linear-gradient(135deg, #0055ff 0%, #ff8c00 100%);
+    background-attachment: fixed;
     color: white;
     display: flex;
     align-items: center;
@@ -28,18 +34,16 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-}
-
-/* iOS standalone mode (launched from home screen) */
-html.ios-standalone {
-    height: 100vh;
-    width: 100vw;
-}
-
-html.ios-standalone body {
-    height: 100vh;
+    /* Safe area insets for iOS notches/home indicators */
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    position: fixed;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Glass Panel Effect with fallback for iOS */
@@ -62,6 +66,8 @@ html.ios-standalone body {
     left: 0;
     width: 100%;
     height: 100%;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -334,6 +340,8 @@ input:focus {
     left: 0;
     width: 100%;
     height: 100%;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
@@ -409,13 +417,20 @@ input:focus {
 @supports (-webkit-touch-callout: none) {
     /* Full viewport height for iOS PWA */
     body {
-        height: 100vh;
-        /* Handle iPhone safe areas and notch */
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        min-height: -webkit-fill-available;
+    }
+    
+    html {
+        height: -webkit-fill-available;
     }
     
     /* Fix iOS input fields */
     input, select, textarea {
         font-size: 16px;
+    }
+    
+    /* Prevent scrolling on iOS */
+    .screen {
+        position: fixed;
     }
 }
