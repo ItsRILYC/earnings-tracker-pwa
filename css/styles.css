@@ -30,6 +30,18 @@ body {
     bottom: 0;
 }
 
+/* iOS standalone mode (launched from home screen) */
+html.ios-standalone {
+    height: 100vh;
+    width: 100vw;
+}
+
+html.ios-standalone body {
+    height: 100vh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    position: fixed;
+}
+
 /* Glass Panel Effect with fallback for iOS */
 .glass-panel {
     background-color: rgba(255, 255, 255, 0.2); /* Fallback */
@@ -229,6 +241,7 @@ h2 {
     flex-direction: row;
     gap: 10px;
     width: 100%;
+    align-items: flex-start;
 }
 
 .form-group-row .form-group {
@@ -238,6 +251,7 @@ h2 {
 .form-group label {
     font-size: 14px;
     opacity: 0.8;
+    white-space: nowrap;
 }
 
 .form-group input {
@@ -320,11 +334,13 @@ input:focus {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
 }
 
 .dialog-panel {
@@ -332,6 +348,7 @@ input:focus {
     width: 85%;
     padding: 20px;
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
 #dialog-message {
@@ -385,5 +402,20 @@ input:focus {
     
     h2 {
         font-size: 18px;
+    }
+}
+
+/* iOS PWA specific fixes */
+@supports (-webkit-touch-callout: none) {
+    /* Full viewport height for iOS PWA */
+    body {
+        height: 100vh;
+        /* Handle iPhone safe areas and notch */
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    
+    /* Fix iOS input fields */
+    input, select, textarea {
+        font-size: 16px;
     }
 }

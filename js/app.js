@@ -79,6 +79,17 @@ const elements = {
 };
 
 /**
+ * Parse a number with either period or comma as decimal separator
+ */
+function parseLocalizedNumber(stringNumber) {
+    // Handle both comma and period as decimal separators
+    if (typeof stringNumber === 'string') {
+        return parseFloat(stringNumber.replace(',', '.'));
+    }
+    return stringNumber;
+}
+
+/**
  * Dutch Tax Calculator Function
  * Calibrated to match exact examples with 5% adjustment at the end
  * 
@@ -286,9 +297,14 @@ function handleCreatePin() {
 
 // Settings functions
 function updateNetWageDisplay() {
-    const grossWage = parseFloat(elements.settings.grossWageInput.value) || 0;
-    const hoursPerWeek = parseInt(elements.settings.hoursPerWeekInput.value) || 40;
-    const age = parseInt(elements.settings.ageInput.value) || 30;
+    const grossWageInput = elements.settings.grossWageInput.value;
+    const hoursPerWeekInput = elements.settings.hoursPerWeekInput.value;
+    const ageInput = elements.settings.ageInput.value;
+    
+    // Parse inputs with comma or period decimal separators
+    const grossWage = parseLocalizedNumber(grossWageInput);
+    const hoursPerWeek = parseInt(hoursPerWeekInput) || 40;
+    const age = parseInt(ageInput) || 30;
     
     if (grossWage > 0) {
         const netWage = calculateNetWage(grossWage, age);
@@ -304,9 +320,14 @@ function updateNetWageDisplay() {
 }
 
 function saveSettings() {
-    const grossWage = parseFloat(elements.settings.grossWageInput.value);
-    const hoursPerWeek = parseInt(elements.settings.hoursPerWeekInput.value);
-    const age = parseInt(elements.settings.ageInput.value);
+    const grossWageInput = elements.settings.grossWageInput.value;
+    const hoursPerWeekInput = elements.settings.hoursPerWeekInput.value;
+    const ageInput = elements.settings.ageInput.value;
+    
+    // Parse inputs with comma or period decimal separators
+    const grossWage = parseLocalizedNumber(grossWageInput);
+    const hoursPerWeek = parseInt(hoursPerWeekInput);
+    const age = parseInt(ageInput);
     
     if (!grossWage || grossWage <= 0) {
         showNotification('Please enter a valid gross wage.');
@@ -329,31 +350,34 @@ function saveSettings() {
     // Calculate earnings per second
     const secondRate = calculateEarningsPerSecond(netWage, hoursPerWeek);
     
+    // Capture exact current time for timestamps
+    const currentTime = new Date();
+    
     // If settings are changed, add previous settings to history
     if (appState.settings.grossWage > 0) {
         const historyEntry = {
             startDate: appState.settings.startDate,
-            endDate: new Date(),
+            endDate: currentTime,
             grossWage: appState.settings.grossWage,
             netWage: appState.settings.netWage,
             hoursPerWeek: appState.settings.hoursPerWeek,
             age: appState.settings.age,
             lastSavedEarnings: appState.earnings.current,
-            lastSavedTimestamp: new Date()
+            lastSavedTimestamp: currentTime
         };
         
         appState.history.unshift(historyEntry);
     }
     
-    // Update settings
+    // Update settings with exact timestamp
     appState.settings.grossWage = grossWage;
     appState.settings.hoursPerWeek = hoursPerWeek;
     appState.settings.age = age;
     appState.settings.netWage = netWage;
     appState.settings.secondRate = secondRate;
-    appState.settings.startDate = new Date();
+    appState.settings.startDate = currentTime;
     appState.settings.lastSavedEarnings = 0;
-    appState.settings.lastSavedTimestamp = new Date();
+    appState.settings.lastSavedTimestamp = currentTime;
     
     // Reset earnings counter
     appState.earnings.current = 0;
@@ -372,7 +396,14 @@ function saveSettings() {
 // Earnings calculation and display
 function startEarningsCalculation() {
     if (appState.animation) {
-        cancelAnimationFrame(appState.animation);
+        if (typeof appState.animation === 'number') {
+            // It's an interval ID (iOS)
+            clearInterval(appState.animation);
+        } else {
+            // It's an animation frame ID (non-iOS)
+            cancelAnimationFrame(appState.animation);
+        }
+        appState.animation = null;
     }
     
     // Calculate accumulated earnings since start date
@@ -388,29 +419,52 @@ function startEarningsCalculation() {
     // Update display immediately
     updateEarningsDisplay();
     
-    // Set up continuous calculation with a 1-second interval
-    function updateEarnings() {
-        if (appState.settings.secondRate > 0) {
-            // Update current earnings amount based on real-time calculation
-            appState.earnings.current = calculateAccumulatedEarnings(
-                appState.settings.startDate,
-                appState.settings.secondRate,
-                appState.settings.lastSavedEarnings,
-                appState.settings.lastSavedTimestamp
-            );
+    // Special handling for iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isIOS) {
+        // Use setInterval for iOS instead of requestAnimationFrame
+        let updateTimer = setInterval(() => {
+            if (appState.settings.secondRate > 0) {
+                // Update current earnings amount based on real-time calculation
+                appState.earnings.current = calculateAccumulatedEarnings(
+                    appState.settings.startDate,
+                    appState.settings.secondRate,
+                    appState.settings.lastSavedEarnings,
+                    appState.settings.lastSavedTimestamp
+                );
+                
+                // Update earnings display
+                elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
+            }
+        }, 1000);
+        
+        appState.animation = updateTimer; // Store timer ID for cleanup
+    } else {
+        // Standard approach for non-iOS browsers using requestAnimationFrame
+        function updateEarnings() {
+            if (appState.settings.secondRate > 0) {
+                // Update current earnings amount based on real-time calculation
+                appState.earnings.current = calculateAccumulatedEarnings(
+                    appState.settings.startDate,
+                    appState.settings.secondRate,
+                    appState.settings.lastSavedEarnings,
+                    appState.settings.lastSavedTimestamp
+                );
+                
+                // Update earnings display
+                elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
+            }
             
-            // Update earnings display
-            elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
+            // Schedule next update in approximately 1 second
+            setTimeout(() => {
+                appState.animation = requestAnimationFrame(updateEarnings);
+            }, 1000);
         }
         
-        // Schedule next update in approximately 1 second
-        setTimeout(() => {
-            appState.animation = requestAnimationFrame(updateEarnings);
-        }, 1000);
+        // Start the update loop
+        appState.animation = requestAnimationFrame(updateEarnings);
     }
-    
-    // Start the update loop
-    appState.animation = requestAnimationFrame(updateEarnings);
 }
 
 function updateEarningsDisplay() {
@@ -433,7 +487,8 @@ function updateEarningsDisplay() {
             month: 'short', 
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            second: '2-digit'
         };
         elements.earnings.startDate.textContent = new Date(appState.settings.startDate).toLocaleDateString('en-NL', options);
     } else {
@@ -467,7 +522,8 @@ function populateHistoryList() {
             month: 'short', 
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            second: '2-digit'
         };
         const startDate = new Date(entry.startDate).toLocaleDateString('en-NL', dateOptions);
         const endDate = new Date(entry.endDate).toLocaleDateString('en-NL', dateOptions);
@@ -678,7 +734,14 @@ document.addEventListener('visibilitychange', function() {
     } else {
         // Pause calculation and save data when tab is hidden
         if (appState.animation) {
-            cancelAnimationFrame(appState.animation);
+            if (typeof appState.animation === 'number') {
+                // It's an interval ID (iOS)
+                clearInterval(appState.animation);
+            } else {
+                // It's an animation frame ID (non-iOS)
+                cancelAnimationFrame(appState.animation);
+            }
+            appState.animation = null;
         }
         saveDataToStorage();
     }
@@ -688,7 +751,35 @@ document.addEventListener('visibilitychange', function() {
 setInterval(saveDataToStorage, 60000); // Save every minute
 
 // Save data before unloading
-window.addEventListener('beforeunload', saveDataToStorage);
+window.addEventListener('beforeunload', function() {
+    if (appState.animation) {
+        if (typeof appState.animation === 'number') {
+            // It's an interval ID (iOS)
+            clearInterval(appState.animation);
+        } else {
+            // It's an animation frame ID (non-iOS)
+            cancelAnimationFrame(appState.animation);
+        }
+        appState.animation = null;
+    }
+    saveDataToStorage();
+});
+
+// Detect if launched from home screen (iOS PWA mode)
+if (("standalone" in window.navigator) && window.navigator.standalone) {
+    // Add a class to the body for standalone mode styling
+    document.body.classList.add('ios-standalone');
+    
+    // Force proper viewport height on iOS
+    function setIOSViewportHeight() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    
+    // Set on initial load and resize
+    setIOSViewportHeight();
+    window.addEventListener('resize', setIOSViewportHeight);
+}
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', initApp);

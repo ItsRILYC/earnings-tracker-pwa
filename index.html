@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-touch-fullscreen" content="yes">
     <meta name="description" content="Track your real-time earnings with Dutch tax calculations">
     <meta name="theme-color" content="#0055ff">
     <title>Real-Time Earnings</title>
@@ -24,6 +25,8 @@
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./images_icon-192x192.png">
+    <!-- iOS app-like icons -->
+    <link rel="apple-touch-startup-image" href="./images_icon-512x512.png">
 </head>
 <body>
     <div id="app">
@@ -86,7 +89,7 @@
                             <input type="number" id="gross-wage" step="0.01" min="0" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label for="hours-per-week">Hours per Week</label>
+                            <label for="hours-per-week">Hours/Week</label>
                             <input type="number" id="hours-per-week-input" min="1" max="168" inputmode="numeric">
                         </div>
                     </div>
@@ -170,6 +173,23 @@
                     .then(registration => console.log('ServiceWorker registered: ', registration.scope))
                     .catch(err => console.log('ServiceWorker registration failed: ', err));
             });
+        }
+        
+        // Force standalone mode for iOS when launched from home screen
+        if (("standalone" in window.navigator) && window.navigator.standalone) {
+            document.documentElement.classList.add('ios-standalone');
+            
+            // Prevent default anchor click behavior
+            document.addEventListener('click', function(e) {
+                var target = e.target;
+                while (target && target.nodeName !== 'A') {
+                    target = target.parentElement;
+                }
+                if (target && target.getAttribute('href')) {
+                    e.preventDefault();
+                    window.location = target.href;
+                }
+            }, false);
         }
     </script>
 </body>
