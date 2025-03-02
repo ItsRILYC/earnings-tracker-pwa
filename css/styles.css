@@ -120,8 +120,8 @@ body {
 
 .visualization-container {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: 242px; /* 10% bigger than original 220px */
+    height: 242px; /* 10% bigger than original 220px */
     margin: 10px auto;
     display: flex;
     align-items: center;
@@ -140,8 +140,8 @@ body {
 }
 
 .spinner {
-    width: 200px;
-    height: 200px;
+    width: 220px; /* 10% bigger than original 200px */
+    height: 220px; /* 10% bigger than original 200px */
     border: 6px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     border-top: 6px solid white;
@@ -411,8 +411,13 @@ input:focus {
     }
     
     .visualization-container {
-        width: 180px;
-        height: 180px;
+        width: 198px; /* 10% bigger than original 180px */
+        height: 198px; /* 10% bigger than original 180px */
+    }
+    
+    .spinner {
+        width: 180px; /* 10% bigger than adjusted size */
+        height: 180px; /* 10% bigger than adjusted size */
     }
     
     .counter {

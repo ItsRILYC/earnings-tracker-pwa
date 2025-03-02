@@ -12,15 +12,16 @@ const appState = {
         netWage: 0,
         hoursPerWeek: 40,
         secondRate: 0,
-        startDate: null
+        startDate: null,
+        lastSavedEarnings: 0,
+        lastSavedTimestamp: null
     },
     earnings: {
         current: 0,
         total: 0
     },
     history: [],
-    animation: null,
-    lastUpdateTime: null
+    animation: null
 };
 
 // DOM Elements
@@ -39,10 +40,9 @@ const elements = {
     },
     earnings: {
         counter: document.getElementById('earnings-counter'),
-        hourlyRate: document.getElementById('hourly-rate'),
         secondRate: document.getElementById('second-rate'),
         startDate: document.getElementById('start-date'),
-        currentRate: document.getElementById('current-rate'),
+        netRate: document.getElementById('net-rate'),
         hoursPerWeek: document.getElementById('hours-per-week'),
         settingsButton: document.getElementById('settings-button'),
         historyButton: document.getElementById('history-button')
@@ -134,6 +134,29 @@ function calculateEarningsPerSecond(netHourlyWage, hoursPerWeek) {
     
     // Calculate earnings per second
     return weeklyEarnings / secondsInWeek;
+}
+
+/**
+ * Calculate accumulated earnings since a specific date
+ * 
+ * @param {Date} startDate - The starting date for calculations
+ * @param {number} secondRate - The earnings per second rate
+ * @param {number} lastSavedEarnings - Previously accumulated earnings
+ * @param {Date} lastSavedTimestamp - When the last earnings were saved
+ * @return {number} The total accumulated earnings
+ */
+function calculateAccumulatedEarnings(startDate, secondRate, lastSavedEarnings = 0, lastSavedTimestamp = null) {
+    const now = new Date();
+    
+    // If we have saved earnings, calculate from the last save point
+    if (lastSavedEarnings > 0 && lastSavedTimestamp) {
+        const secondsSinceLastSave = (now - new Date(lastSavedTimestamp)) / 1000;
+        return lastSavedEarnings + (secondRate * secondsSinceLastSave);
+    }
+    
+    // Otherwise calculate from the start date
+    const secondsElapsed = (now - new Date(startDate)) / 1000;
+    return secondRate * secondsElapsed;
 }
 
 // Navigation functions
@@ -273,10 +296,10 @@ function updateNetWageDisplay() {
         
         // Calculate and display earnings per second
         const secondRate = calculateEarningsPerSecond(netWage, hoursPerWeek);
-        elements.settings.secondWageDisplay.textContent = `€${secondRate.toFixed(8)}`;
+        elements.settings.secondWageDisplay.textContent = `€${secondRate.toFixed(5)}`;
     } else {
         elements.settings.netWageDisplay.textContent = '€0.00';
-        elements.settings.secondWageDisplay.textContent = '€0.00';
+        elements.settings.secondWageDisplay.textContent = '€0.00000';
     }
 }
 
@@ -314,7 +337,9 @@ function saveSettings() {
             grossWage: appState.settings.grossWage,
             netWage: appState.settings.netWage,
             hoursPerWeek: appState.settings.hoursPerWeek,
-            age: appState.settings.age
+            age: appState.settings.age,
+            lastSavedEarnings: appState.earnings.current,
+            lastSavedTimestamp: new Date()
         };
         
         appState.history.unshift(historyEntry);
@@ -327,10 +352,11 @@ function saveSettings() {
     appState.settings.netWage = netWage;
     appState.settings.secondRate = secondRate;
     appState.settings.startDate = new Date();
+    appState.settings.lastSavedEarnings = 0;
+    appState.settings.lastSavedTimestamp = new Date();
     
     // Reset earnings counter
     appState.earnings.current = 0;
-    appState.lastUpdateTime = Date.now();
     
     // Update UI
     updateEarningsDisplay();
@@ -349,21 +375,29 @@ function startEarningsCalculation() {
         cancelAnimationFrame(appState.animation);
     }
     
-    // Set initial time for calculations
-    appState.lastUpdateTime = Date.now();
+    // Calculate accumulated earnings since start date
+    if (appState.settings.startDate && appState.settings.secondRate > 0) {
+        appState.earnings.current = calculateAccumulatedEarnings(
+            appState.settings.startDate,
+            appState.settings.secondRate,
+            appState.settings.lastSavedEarnings,
+            appState.settings.lastSavedTimestamp
+        );
+    }
     
     // Update display immediately
     updateEarningsDisplay();
     
-    // Set up continuous calculation with a 1-second interval for better performance
+    // Set up continuous calculation with a 1-second interval
     function updateEarnings() {
-        const now = Date.now();
-        const elapsedSeconds = (now - appState.lastUpdateTime) / 1000;
-        appState.lastUpdateTime = now;
-        
         if (appState.settings.secondRate > 0) {
-            // Update current earnings amount based on earnings per second
-            appState.earnings.current += appState.settings.secondRate * elapsedSeconds;
+            // Update current earnings amount based on real-time calculation
+            appState.earnings.current = calculateAccumulatedEarnings(
+                appState.settings.startDate,
+                appState.settings.secondRate,
+                appState.settings.lastSavedEarnings,
+                appState.settings.lastSavedTimestamp
+            );
             
             // Update earnings display
             elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
@@ -383,14 +417,11 @@ function updateEarningsDisplay() {
     // Update counter
     elements.earnings.counter.textContent = `€${appState.earnings.current.toFixed(2)}`;
     
-    // Update hourly rate
-    elements.earnings.hourlyRate.textContent = `€${appState.settings.netWage.toFixed(2)}/hour net`;
+    // Update second rate (5 decimal places)
+    elements.earnings.secondRate.textContent = `€${appState.settings.secondRate.toFixed(5)}/second`;
     
-    // Update second rate
-    elements.earnings.secondRate.textContent = `€${appState.settings.secondRate.toFixed(8)}/second`;
-    
-    // Update current rate
-    elements.earnings.currentRate.textContent = `€${appState.settings.grossWage.toFixed(2)}/hour gross`;
+    // Update net rate
+    elements.earnings.netRate.textContent = `€${appState.settings.netWage.toFixed(2)}/hour net`;
     
     // Update hours per week
     elements.earnings.hoursPerWeek.textContent = `${appState.settings.hoursPerWeek}`;
@@ -584,6 +615,10 @@ function showNotification(message, duration = 3000) {
 // Data persistence
 function saveDataToStorage() {
     try {
+        // Save current earnings state for 24/7 tracking
+        appState.settings.lastSavedEarnings = appState.earnings.current;
+        appState.settings.lastSavedTimestamp = new Date();
+        
         const dataToSave = {
             settings: appState.settings,
             history: appState.history
@@ -606,9 +641,13 @@ function loadDataFromStorage() {
             // Restore settings
             appState.settings = parsedData.settings || appState.settings;
             
-            // Ensure date object is properly reconstituted
+            // Ensure date objects are properly reconstituted
             if (appState.settings.startDate) {
                 appState.settings.startDate = new Date(appState.settings.startDate);
+            }
+            
+            if (appState.settings.lastSavedTimestamp) {
+                appState.settings.lastSavedTimestamp = new Date(appState.settings.lastSavedTimestamp);
             }
             
             // Restore history
@@ -618,6 +657,9 @@ function loadDataFromStorage() {
             appState.history.forEach(entry => {
                 entry.startDate = new Date(entry.startDate);
                 entry.endDate = new Date(entry.endDate);
+                if (entry.lastSavedTimestamp) {
+                    entry.lastSavedTimestamp = new Date(entry.lastSavedTimestamp);
+                }
             });
         }
     } catch (error) {
@@ -631,7 +673,6 @@ document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
         // Resume calculation when tab becomes visible again
         if (appState.authenticated) {
-            appState.lastUpdateTime = Date.now(); // Reset the time to avoid large jumps
             startEarningsCalculation();
         }
     } else {
@@ -643,8 +684,11 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// Initialize application when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp);
+// Save data periodically to ensure 24/7 tracking
+setInterval(saveDataToStorage, 60000); // Save every minute
 
 // Save data before unloading
 window.addEventListener('beforeunload', saveDataToStorage);
+
+// Initialize application when DOM is loaded
+document.addEventListener('DOMContentLoaded', initApp);

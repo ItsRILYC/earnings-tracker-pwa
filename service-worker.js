@@ -3,12 +3,13 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'earnings-app-v2';
+const CACHE_NAME = 'earnings-app-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './css/styles.css',
     './js/app.js',
+    './js/dutch-tax.js',
     './manifest.json',
     './images_icon-192x192.png',
     './images_icon-512x512.png'
@@ -113,67 +114,6 @@ async function syncSettings() {
         console.error('Background sync failed:', error);
     }
 }
-
-// Handle push notifications
-self.addEventListener('push', event => {
-    if (!event.data) {
-        console.warn('Push event received but no data');
-        return;
-    }
-    
-    let data;
-    try {
-        data = event.data.json();
-    } catch (e) {
-        data = {
-            title: 'Earnings Update',
-            body: event.data.text()
-        };
-    }
-    
-    const options = {
-        body: data.body || 'Your earnings have been updated',
-        icon: './images_icon-192x192.png',
-        badge: './images_icon-192x192.png',
-        data: {
-            url: data.url || './'
-        },
-        vibrate: [100, 50, 100],
-        timestamp: Date.now()
-    };
-    
-    event.waitUntil(
-        self.registration.showNotification(data.title || 'Earnings Update', options)
-    );
-});
-
-// Handle notification click
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-    // Attempt to find an open window and navigate to the URL
-    const urlToOpen = event.notification.data.url;
-    
-    event.waitUntil(
-        clients.matchAll({
-            type: 'window',
-            includeUncontrolled: true
-        }).then(windowClients => {
-            // Check if there is already a window with the URL open
-            const matchingClient = windowClients.find(client => {
-                return client.url === urlToOpen;
-            });
-            
-            if (matchingClient) {
-                // If so, focus it
-                return matchingClient.focus();
-            }
-            
-            // If not, open a new window
-            return clients.openWindow(urlToOpen);
-        })
-    );
-});
 
 // Handle app updates
 self.addEventListener('message', event => {
