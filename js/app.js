@@ -21,11 +21,19 @@ const appState = {
         total: 0
     },
     history: [],
-    timer: null
+    timer: null,
+    debugMode: false // Set to true to enable console logging
 };
 
-// Check if running on iOS
+// Detect iOS for platform-specific optimizations
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+// Debug logging function
+function debug(message) {
+    if (appState.debugMode) {
+        console.log(`[Earnings Debug] ${message}`);
+    }
+}
 
 // DOM Elements
 const elements = {
@@ -194,16 +202,54 @@ function showScreen(screenId) {
     
     // Hide any open dialogs when changing screens
     hideConfirmationDialog();
+    
+    // Additional iOS optimizations
+    if (isIOS) {
+        // Force redraw for iOS
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Force reflow
+        document.body.style.display = '';
+    }
 }
 
 // Initialize application
 function initApp() {
+    debug("Initializing application");
     attachEventListeners();
     loadDataFromStorage();
     checkAuthentication();
     
     // Initialize dialog state
     window.dialogCallback = null;
+    
+    // iOS-specific optimizations
+    if (isIOS) {
+        optimizeForIOS();
+    }
+}
+
+// iOS-specific optimizations
+function optimizeForIOS() {
+    debug("Applying iOS optimizations");
+    
+    // Fix viewport height
+    function fixIOSViewport() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        debug(`Setting viewport height: ${vh * 100}px`);
+    }
+    
+    // Apply fixes on various events
+    window.addEventListener('resize', fixIOSViewport);
+    window.addEventListener('orientationchange', fixIOSViewport);
+    document.addEventListener('focus', fixIOSViewport, true);
+    
+    // Initial fix
+    fixIOSViewport();
+    
+    // Force background to appear
+    document.body.style.backgroundColor = "#0055ff";
+    document.body.style.backgroundImage = "linear-gradient(135deg, #0055ff 0%, #ff8c00 100%)";
 }
 
 // Event listeners
@@ -410,8 +456,10 @@ function saveSettings() {
     showNotification('Settings saved successfully!');
 }
 
-// COMPLETELY REWRITTEN TIMER FUNCTION FOR CROSS-PLATFORM COMPATIBILITY
+// COMPLETELY REWRITTEN TIMER FUNCTION FOR IOS COMPATIBILITY
 function startEarningsCalculation() {
+    debug("Starting earnings calculation");
+    
     // Stop any existing timer first
     stopEarningsCalculation();
     
@@ -421,29 +469,53 @@ function startEarningsCalculation() {
     // Update display immediately
     updateEarningsDisplay();
     
-    // For iOS devices: Use window.setTimeout as it's the most reliable
-    // Start a timer that updates every second
-    function timerCallback() {
-        updateEarningsAmount();
-        updateEarningsCounter(); // Update just the counter display
+    // Function to update earnings using native setTimeout
+    function runTimer() {
+        if (!appState.timer) {
+            return; // Exit if timer has been stopped
+        }
         
-        // Store reference to the next timer
-        appState.timer = window.setTimeout(timerCallback, 1000);
+        try {
+            // Update earnings amount
+            updateEarningsAmount();
+            
+            // Update the counter UI
+            if (elements.earnings.counter) {
+                elements.earnings.counter.textContent = formatCurrency(appState.earnings.current);
+            }
+            
+            // iOS timer debugging
+            debug(`Timer tick: ${new Date().toISOString()}, Current: ${appState.earnings.current}`);
+            
+            // Schedule the next update
+            appState.timer = setTimeout(runTimer, 1000);
+        } catch (error) {
+            debug(`Timer error: ${error}`);
+            
+            // Try to recover by restarting the timer
+            setTimeout(() => {
+                if (!appState.timer) {
+                    startEarningsCalculation();
+                }
+            }, 2000);
+        }
     }
     
-    // Start the first timer - ensures we have a clean start
-    appState.timer = window.setTimeout(timerCallback, 1000);
+    // Start the timer immediately
+    appState.timer = setTimeout(runTimer, 1000);
 }
 
 // Clean function to stop the timer
 function stopEarningsCalculation() {
+    debug("Stopping earnings calculation");
+    
     if (appState.timer) {
-        window.clearTimeout(appState.timer);
+        clearTimeout(appState.timer);
         appState.timer = null;
     }
 }
 
-// Simple function to update earnings amount
+// Function to update earnings amount
 function updateEarningsAmount() {
     if (appState.settings.startDate && appState.settings.secondRate > 0) {
         appState.earnings.current = calculateAccumulatedEarnings(
@@ -452,13 +524,6 @@ function updateEarningsAmount() {
             appState.settings.lastSavedEarnings,
             appState.settings.lastSavedTimestamp
         );
-    }
-}
-
-// Very simple function to just update the counter display
-function updateEarningsCounter() {
-    if (elements.earnings.counter) {
-        elements.earnings.counter.textContent = formatCurrency(appState.earnings.current);
     }
 }
 
@@ -677,8 +742,9 @@ function saveDataToStorage() {
         };
         
         localStorage.setItem('earningsAppData', JSON.stringify(dataToSave));
+        debug("Data saved to storage");
     } catch (error) {
-        console.error('Error saving data to storage:', error);
+        debug(`Error saving data: ${error}`);
         showNotification('Error saving data. Please try again.');
     }
 }
@@ -713,9 +779,11 @@ function loadDataFromStorage() {
                     entry.lastSavedTimestamp = new Date(entry.lastSavedTimestamp);
                 }
             });
+            
+            debug("Data loaded from storage successfully");
         }
     } catch (error) {
-        console.error('Error loading data from storage:', error);
+        debug(`Error loading data: ${error}`);
         showNotification('Error loading saved data.');
     }
 }
@@ -723,11 +791,13 @@ function loadDataFromStorage() {
 // Handle application visibility changes
 document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
+        debug("App became visible");
         // Resume calculation when tab becomes visible again
         if (appState.authenticated) {
             startEarningsCalculation();
         }
     } else {
+        debug("App became hidden");
         // Pause calculation and save data when tab is hidden
         stopEarningsCalculation();
         saveDataToStorage();
@@ -742,19 +812,6 @@ window.addEventListener('beforeunload', function() {
     stopEarningsCalculation();
     saveDataToStorage();
 });
-
-// Special handling for iOS to ensure viewport is correct
-if (isIOS) {
-    function fixIOSViewport() {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    
-    window.addEventListener('resize', fixIOSViewport);
-    window.addEventListener('orientationchange', fixIOSViewport);
-    document.addEventListener('focus', fixIOSViewport, true);
-    fixIOSViewport();
-}
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', initApp);

@@ -11,23 +11,26 @@
     --vh: 1vh;
 }
 
-html, body {
+html {
     width: 100%;
+    height: 100%;
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
     min-height: -webkit-fill-available;
     overflow: hidden;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
 }
 
 body {
-    background: #0055ff; /* Fallback solid color */
-    background: linear-gradient(135deg, #0055ff 0%, #ff8c00 100%);
+    width: 100%;
+    height: 100%;
+    height: 100vh; 
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: -webkit-fill-available;
+    overflow: hidden;
+    background-color: #0055ff;
+    background-image: linear-gradient(135deg, #0055ff 0%, #ff8c00 100%);
     background-attachment: fixed;
+    background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
     color: white;
@@ -36,21 +39,29 @@ body {
     justify-content: center;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Safe area insets for iOS notches/home indicators */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #app {
     width: 100%;
     height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 /* Glass Panel Effect with fallback for iOS */
 .glass-panel {
-    background-color: rgba(255, 255, 255, 0.2); /* Fallback */
+    background-color: rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 30px;
@@ -76,8 +87,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Fixes scrolling issues */
     overflow: hidden;
+    z-index: 10;
 }
 
 .hidden {
@@ -426,23 +437,20 @@ input:focus {
 /* Extra WebKit specific fixes to ensure proper rendering on iOS */
 @supports (-webkit-touch-callout: none) {
     body {
-        /* Force background to extend */
-        background-attachment: fixed;
-        /* Add extra height to cover any scrolling area */
-        height: 100vh;
+        /* Add iOS-specific background fixes */
+        background-color: #0055ff !important;
+        background-image: linear-gradient(135deg, #0055ff 0%, #ff8c00 100%) !important;
+        background-attachment: fixed !important;
         min-height: -webkit-fill-available;
-        height: calc(var(--vh, 1vh) * 100);
     }
     
     .screen {
-        /* Fix background height */
+        /* Fix screen height */
         min-height: -webkit-fill-available;
-        height: 100vh;
-        height: calc(var(--vh, 1vh) * 100);
     }
     
-    input, button {
-        /* Prevent zooming on focus */
-        font-size: 16px;
+    /* Prevent iOS from zooming on input focus */
+    input, button, select, textarea {
+        font-size: 16px !important;
     }
 }
